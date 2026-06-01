@@ -97,7 +97,7 @@ function register(): void
             'required' => ['found'],
         ],
         'execute_callback' => static function (array $input) use ($previous): array|WP_Error {
-            $agent_slug = (string) ($input['slug'] ?? '');
+            $agent_slug = normalize_requested_slug((string) ($input['slug'] ?? ''));
             if ($agent_slug === '') {
                 return new WP_Error('missing_slug', __('A slug is required.', domain: 'novamira'));
             }
@@ -149,4 +149,14 @@ function register(): void
             'mcp' => ['public' => true, 'type' => 'tool'],
         ],
     ]);
+}
+
+function normalize_requested_slug(string $slug): string
+{
+    $normalized = trim($slug);
+    if (str_starts_with($normalized, 'novamira/')) {
+        return substr($normalized, strlen('novamira/'));
+    }
+
+    return $normalized;
 }
