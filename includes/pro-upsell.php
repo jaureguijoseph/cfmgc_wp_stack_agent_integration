@@ -159,7 +159,7 @@ function novamira_render_pro_welcome_notice(): void
         <p style="font-size:14px;margin:10px 0;">
             <strong><?php esc_html_e('Novamira Pro is here.', domain: 'novamira'); ?></strong>
             <?php esc_html_e(
-                'Elementor and Bricks abilities and memory between sessions, on top of Novamira.',
+                'Specializations that combine abilities and skills for page builders (Elementor, Bricks) and content plugins (ACF, JetEngine, Meta Box, Pods, ACPT, ASE), with more on the way, plus memory between sessions.',
                 domain: 'novamira',
             ); ?>
             &nbsp;
@@ -205,7 +205,7 @@ function novamira_render_pro_upsell_card(): void
         </h2>
         <p style="margin:0 0 12px;color:#50575e;">
             <?php esc_html_e(
-                'Ready-made abilities for Elementor and Bricks, plus memory between sessions.',
+                'Specializations that combine abilities and skills for page builders (Elementor, Bricks) and content plugins (ACF, JetEngine, Meta Box, Pods, ACPT, ASE), with more on the way, plus memory between sessions.',
                 domain: 'novamira',
             ); ?>
         </p>
