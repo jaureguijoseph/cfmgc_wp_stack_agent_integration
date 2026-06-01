@@ -59,6 +59,11 @@ wp_register_ability('novamira/gutenberg-add-pending-change', [
                 'description' => 'Top-level Gutenberg block specs: [{name, attributes, innerBlocks}]. Static/native blocks are serialized by the Block Editor Queue inside the target editor context.',
                 'items' => ['type' => 'object', 'additionalProperties' => true],
             ],
+            'allow_raw_html' => [
+                'type' => 'boolean',
+                'description' => 'Set true only to intentionally queue content whose top-level blocks are all raw HTML (core/html or classic). Defaults to false, which refuses such content so you compose with registered blocks instead.',
+                'default' => false,
+            ],
         ],
         'required' => ['block_spec'],
         'anyOf' => [
@@ -85,7 +90,7 @@ wp_register_ability('novamira/gutenberg-add-pending-change', [
         'show_in_rest' => true,
         'mcp' => ['public' => true],
         'annotations' => [
-            'instructions' => 'Use this for native/static Gutenberg content. If no batch_id is supplied, this ability creates a draft batch and adds the first item. Check finalizer_runtime in the response: if online is false, ask the user to open dashboard_url and keep the Block Editor Queue page open while you finish queueing. You may stream finalizer_runtime.sse_url with curl -N or poll finalizer_runtime.poll_url with curl to check whether the page is still open. Continue adding items to the same batch_id, then call gutenberg-enable-batch-finalization. If a Block Editor Queue page is online, enabling the batch should let that page process it automatically. Do not tell the user the changes are live until finalization completes.',
+            'instructions' => 'Use this for native/static Gutenberg content. Compose with registered blocks (core or third-party) passed as {name, attributes, innerBlocks}, not raw HTML; the queue serializes each block with its own editor JavaScript. If every top-level block is raw HTML (core/html or classic) the ability refuses the write so you recompose with real blocks; only resend with allow_raw_html=true when the raw HTML is genuinely intentional. If no batch_id is supplied, this ability creates a draft batch and adds the first item. Check finalizer_runtime in the response: if online is false, ask the user to open dashboard_url and keep the Block Editor Queue page open while you finish queueing. You may stream finalizer_runtime.sse_url with curl -N or poll finalizer_runtime.poll_url with curl to check whether the page is still open. Continue adding items to the same batch_id, then call gutenberg-enable-batch-finalization. If a Block Editor Queue page is online, enabling the batch should let that page process it automatically. Do not tell the user the changes are live until finalization completes.',
             'readonly' => false,
             'destructive' => false,
             'idempotent' => false,
@@ -113,6 +118,18 @@ function gutenberg_add_pending_change(array $input): array|WP_Error
     $blocks = gutenberg_add_pending_blocks($input);
     if (is_wp_error($blocks)) {
         return $blocks;
+    }
+
+    if (($input['allow_raw_html'] ?? false) !== true && blocks_are_raw_html_only($blocks)) {
+        return new WP_Error('gutenberg_raw_html_only', implode(' ', [
+            'All content in this change is raw HTML (core/html or classic), even where wrapped in a group or columns.',
+            'Compose with registered blocks instead: pass {name, attributes, innerBlocks} for core blocks',
+            '(core/heading, core/paragraph, core/list, core/image, core/columns, ...) or for third-party blocks,',
+            'which you can discover via WP_Block_Type_Registry::get_instance()->get_all_registered().',
+            'The Block Editor Queue serializes each block with its own editor JavaScript, so you never hand-write markup.',
+            'Use core/html only for a small fragment with no registered-block equivalent.',
+            'If this raw HTML is intentional, resend with allow_raw_html set to true.',
+        ]));
     }
 
     $existing = active_item_for_target($target->ID, $target_type);

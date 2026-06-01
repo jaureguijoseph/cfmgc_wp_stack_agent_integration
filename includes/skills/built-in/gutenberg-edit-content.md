@@ -35,6 +35,26 @@ live, so the Novamira Block Editor Queue admin page is part of the workflow.
   pending change on the same target unless the user confirms the old batch
   should be canceled.
 
+## Compose With Registered Blocks
+
+Build content from registered blocks — core *and* third-party — supplied as
+`{name, attributes, innerBlocks}`. The finalizer serializes each block with its
+own editor JavaScript, so never hand-write a block's HTML.
+
+- Core blocks: `core/heading` (set `level`), `core/paragraph`, `core/list` +
+  `core/list-item`, `core/image`, `core/quote`, `core/buttons` + `core/button`,
+  `core/table`, `core/code`, `core/separator`. Express layout and nesting with
+  `core/group` / `core/columns` + `core/column` and `innerBlocks`, not HTML.
+- Third-party blocks (WooCommerce, Kadence, ACF, etc.): if a registered block
+  exists for what you are building, use it — pass its `name` and `attributes`
+  instead of reproducing its output. To discover the available block names and
+  their attributes, query the registry, e.g. via `execute-php`:
+  `WP_Block_Type_Registry::get_instance()->get_all_registered()`.
+- Use `core/html` only for a small fragment with no registered-block
+  equivalent, and keep it minimal. Never wrap whole sections or the entire post
+  in `core/html` or a classic/freeform block: raw-HTML blocks are not visually
+  editable and defeat native editing.
+
 ## Choose the Write Path
 
 - Use `novamira/gutenberg-write-content` only when every block is a registered

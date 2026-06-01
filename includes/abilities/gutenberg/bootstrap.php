@@ -805,6 +805,66 @@ function top_level_block_names(array $blocks): array
 }
 
 /**
+ * A raw-HTML block carries hand-written markup the editor cannot edit visually:
+ * the HTML block and the legacy Classic (freeform) block.
+ */
+function is_raw_html_block(string $name): bool
+{
+    return $name === 'core/html' || $name === 'core/freeform';
+}
+
+/**
+ * Whether every content-bearing (leaf) block is raw HTML, at any nesting depth.
+ * Tell-tale of content dumped into HTML blocks instead of composed from
+ * registered blocks. Recurses past container blocks, so it still trips when the
+ * raw HTML is wrapped in a core/group or core/columns. A single raw fragment
+ * beside real blocks does not trip it.
+ *
+ * @param list<array<string, mixed>> $blocks
+ */
+function blocks_are_raw_html_only(array $blocks): bool
+{
+    $leaves = leaf_block_names($blocks);
+    if ($leaves === []) {
+        return false;
+    }
+    foreach ($leaves as $name) {
+        if (!is_raw_html_block($name)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Names of the leaf blocks (those with no innerBlocks) anywhere in the tree.
+ * Container blocks are structure rather than content, so recurse past them.
+ *
+ * @param list<array<string, mixed>> $blocks
+ * @return list<string>
+ */
+function leaf_block_names(array $blocks): array
+{
+    $names = [];
+    foreach ($blocks as $block) {
+        $inner = block_inner_specs($block);
+        if ($inner !== []) {
+            foreach (leaf_block_names($inner) as $name) {
+                $names[] = $name;
+            }
+            continue;
+        }
+        $name = is_string($block['name'] ?? null) ? $block['name'] : '';
+        if ($name !== '') {
+            $names[] = $name;
+        }
+    }
+
+    return $names;
+}
+
+/**
  * @param list<array<string, mixed>> $blocks
  */
 function item_change_summary(WP_Post $target, string $operation, array $blocks): string
