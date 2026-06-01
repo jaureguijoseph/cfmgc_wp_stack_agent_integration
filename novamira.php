@@ -428,7 +428,7 @@ add_filter(
     static function (array $plugin_meta, string $plugin_file): array {
         if ($plugin_file === plugin_basename(__FILE__)) {
             $plugin_meta[] =
-                '<a href="https://www.facebook.com/groups/dynamic.ooo" target="_blank" rel="noopener noreferrer">'
+                '<a href="https://www.facebook.com/groups/novamira" target="_blank" rel="noopener noreferrer">'
                 . esc_html__('Community', domain: 'novamira')
                 . '</a>';
         }
