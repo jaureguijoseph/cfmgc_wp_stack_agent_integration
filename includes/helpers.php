@@ -940,6 +940,33 @@ function novamira_get_active_languages()
 }
 
 /**
+ * Markdown lines that report the active theme and ask the user to choose a
+ * working mode before content/layout work. Page builders and block libraries
+ * are intentionally not hardcoded: the AI identifies them from the
+ * installed-plugins inventory above, which stays correct as new ones ship.
+ *
+ * @return list<string>
+ */
+function novamira_build_building_context_lines(): array
+{
+    $theme = wp_get_theme();
+    $theme_desc = $theme->get('Name');
+    if ($theme->get_template() !== $theme->get_stylesheet()) {
+        $parent = $theme->parent();
+        $theme_desc .=
+            ' (child theme of ' . ($parent instanceof WP_Theme ? $parent->get('Name') : $theme->get_template()) . ')';
+    }
+
+    return [
+        '## Building pages and layout',
+        '',
+        'Active theme: ' . $theme_desc . '.',
+        '',
+        'Before building or restructuring a page\'s content or layout, check the installed-plugins inventory above for page builders (which replace the editor) and block libraries (which extend Gutenberg), then ask the user which approach to use: a page builder, Gutenberg, classic theme templates, a child theme, or a custom theme. Ask once and follow that choice; do not mix approaches (e.g. Gutenberg blocks in a page-builder page).',
+    ];
+}
+
+/**
  * Build the MCP server instructions sent to AI agents during initialization.
  *
  * Includes environment info (PHP/WP versions, plugins) and guidance on using
@@ -1005,6 +1032,8 @@ function novamira_build_server_instructions()
         'Use WordPress hooks (actions/filters), template hierarchy, and REST API',
         'conventions. Write code that integrates with WordPress, not code that ignores it.',
     ]);
+
+    $lines = array_merge($lines, novamira_build_building_context_lines());
 
     return implode("\n", $lines);
 }
