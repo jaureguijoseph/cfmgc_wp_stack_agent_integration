@@ -938,6 +938,33 @@ function novamira_build_standard_configs(string $mcp_servers_json, string $vscod
 }
 
 /**
+ * Informational notice above the connect prompt: pasting the prompt hands the
+ * application password to the AI agent. Links to the manual configuration,
+ * which reaches the same result without exposing the password to the AI.
+ */
+function novamira_render_prompt_password_notice(): void
+{ ?>
+    <div class="notice notice-info inline" style="margin:0 0 12px;">
+        <p style="margin:0;">
+            <strong><?php esc_html_e(
+                'This prompt shares your application password with your AI agent.',
+                domain: 'novamira',
+            ); ?></strong>
+            <?php printf(
+                /* translators: %s: link that opens the manual configuration section */
+                esc_html__(
+                    'Prefer to keep it private? Use the %s and paste the snippet into the config file yourself.',
+                    domain: 'novamira',
+                ),
+                '<button type="button" class="button-link" onclick="novamiraOpenManualConfig()">'
+                . esc_html__('manual configuration', domain: 'novamira')
+                . '</button>',
+            ); ?>
+        </p>
+    </div>
+    <?php }
+
+/**
  * Render the tabbed MCP client config section.
  *
  * @param string $rest_url        MCP REST endpoint URL.
@@ -1005,6 +1032,8 @@ function novamira_render_config_section(string $rest_url, string $username, stri
             </p>
         </div>
     <?php endif; ?>
+
+    <?php novamira_render_prompt_password_notice(); ?>
 
     <div class="novamira-paste-block">
         <div class="novamira-paste-content" id="novamira-paste-content">
@@ -1305,6 +1334,22 @@ function novamira_render_config_section(string $rest_url, string $username, stri
                 panel.hidden = false;
                 btn.setAttribute('aria-expanded', 'true');
             }
+        };
+
+        // Open the manual-config section (never closes it) and scroll to it.
+        // Used by the "manual configuration" link in the password notice.
+        window.novamiraOpenManualConfig = function () {
+            var panel = document.getElementById('novamira-manual-config');
+            if (panel === null) {
+                return;
+            }
+            panel.style.display = '';
+            panel.hidden = false;
+            var toggle = document.getElementById('novamira-manual-toggle');
+            if (toggle !== null) {
+                toggle.setAttribute('aria-expanded', 'true');
+            }
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
         window.novamiraToggleExpandPaste = function (btn) {
