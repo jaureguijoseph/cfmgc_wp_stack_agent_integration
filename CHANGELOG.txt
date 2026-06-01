@@ -1,3 +1,10 @@
+v1.6.0 - 2026/06/01
+* New: A new Abilities Hub screen lists every ability available to AI agents, grouped by the plugin that provides it, so you can enable or disable each one individually.
+* Tweak: Gutenberg pages built by AI agents now consistently use native and third-party blocks, so the result stays editable in the block editor; previously they could sometimes place content in a single raw HTML block.
+* Tweak: Before building or restructuring a page, AI agents now confirm which approach you want to use (a page builder, the block editor, or the theme itself) instead of assuming one.
+* Tweak: The Configuration page now notes that the paste-to-agent prompt includes your application password, and links to the manual configuration if you prefer not to share it with the AI.
+* Minor Fixes
+
 v1.5.1 - 2026/05/28
 * Tweak: The Novamira admin bar item now includes a dropdown toggle for turning AI Abilities on and off.
 * Minor Fixes
