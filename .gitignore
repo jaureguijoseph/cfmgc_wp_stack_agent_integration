@@ -1,5 +1,6 @@
 .mcp.json
 /vendor
+novamira-visual/dist/
 *.swp
 
 # IDE
