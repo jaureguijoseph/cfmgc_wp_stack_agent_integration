@@ -36,13 +36,10 @@ $user_total_pages = (int) $user_query->max_num_pages;
 $just_imported_key = 'novamira_skill_just_imported_' . get_current_user_id();
 /** @var list<int> $just_imported */
 $just_imported = [];
-// get_transient() returns mixed (false when absent, otherwise the stored value).
-// @mago-expect analysis:mixed-assignment
+/** @var mixed $just_imported_raw */
 $just_imported_raw = get_transient($just_imported_key);
 if (is_array($just_imported_raw)) {
-    // Values come from an untyped (array<mixed>) transient payload; each entry
-    // is validated with is_scalar() below before use.
-    // @mago-expect analysis:mixed-assignment
+    /** @var mixed $post_id */
     foreach ($just_imported_raw as $post_id) {
         if (!is_scalar($post_id)) {
             continue;
@@ -313,8 +310,7 @@ $new_url = add_query_arg(['page' => Admin\PAGE_SLUG, 'skill' => 'new'], admin_ur
             ); ?>">
                 <?php
 
-                // paginate_links() returns string|array|void; narrowed with is_string() below.
-                // @mago-expect analysis:mixed-assignment
+                /** @var mixed $links */
                 $links = paginate_links([
                     'base' => add_query_arg(['paged' => '%#%'], admin_url('admin.php?page=' . Admin\PAGE_SLUG)),
                     'format' => '',

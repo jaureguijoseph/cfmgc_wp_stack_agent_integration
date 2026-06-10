@@ -426,11 +426,7 @@ function process_one_upload(array $file, string $on_conflict): string|\WP_Error
  *
  * @return list<array{name: string, tmp_name: string, error: int, size: int}>
  */
-// $_FILES is an untyped superglobal: every branch guards both the single-file and
-// array shapes, which is irreducibly branchy, and the loop variable below is mixed
-// because $raw['name'] is mixed (each element is narrowed at its use site instead).
 // @mago-expect lint:cyclomatic-complexity
-// @mago-expect analysis:mixed-assignment
 function normalize_uploaded_files(mixed $raw): array
 {
     if (!is_array($raw) || !array_key_exists('name', $raw)) {
@@ -442,6 +438,7 @@ function normalize_uploaded_files(mixed $raw): array
     $sizes = is_array($raw['size'] ?? null) ? $raw['size'] : [$raw['size'] ?? 0];
 
     $out = [];
+    /** @var mixed $name */
     foreach ($names as $i => $name) {
         $err = (int) ($errors[$i] ?? UPLOAD_ERR_NO_FILE);
         if ($err === UPLOAD_ERR_NO_FILE) {
@@ -591,9 +588,7 @@ function require_capability_and_nonce(string $nonce_action): void
 
 function load_skill_post(int $post_id): \WP_Post
 {
-    // get_post() is typed `WP_Post|array|null` by the WP stubs; the bare `array`
-    // member resolves to mixed, which the instanceof guard below narrows away.
-    // @mago-expect analysis:mixed-assignment
+    /** @var mixed $maybe_post */
     $maybe_post = get_post($post_id);
     if (!$maybe_post instanceof \WP_Post || $maybe_post->post_type !== Cpt\POST_TYPE) {
         wp_die(__('Skill not found.', domain: 'novamira'));

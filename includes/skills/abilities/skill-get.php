@@ -133,9 +133,7 @@ function register(): void
             // Generic — works for any plugin that previously registered
             // `novamira/skill-get`.
             if ($previous instanceof \WP_Ability) {
-                // WP_Ability::execute() is typed `mixed|WP_Error` by core; the
-                // is_wp_error/is_array guards below narrow it safely.
-                // @mago-expect analysis:mixed-assignment
+                /** @var mixed $forwarded */
                 $forwarded = $previous->execute(['slug' => $agent_slug]);
                 if (!is_wp_error($forwarded)) {
                     return is_array($forwarded) ? $forwarded : ['found' => false];

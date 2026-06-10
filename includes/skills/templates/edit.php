@@ -29,10 +29,7 @@ $enabled = true;
 $post_id = 0;
 
 if (!$is_new) {
-    // get_post() returns WP_Post|array|null; Mago resolves the array branch to
-    // array<array-key, mixed>, so the assignment is mixed. The instanceof guard below
-    // narrows it back to WP_Post before any use.
-    // @mago-expect analysis:mixed-assignment
+    /** @var mixed $maybe_post */
     $maybe_post = get_post((int) $id_or_new);
     if (!$maybe_post instanceof \WP_Post || $maybe_post->post_type !== Cpt\POST_TYPE) {
         wp_die(__('Skill not found.', domain: 'novamira'));
