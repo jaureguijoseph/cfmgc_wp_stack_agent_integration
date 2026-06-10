@@ -166,6 +166,7 @@ function novamira_run_wp_cli(array $input)
 {
     $raw_args = is_array($input['args'] ?? null) ? $input['args'] : [];
     $args = [];
+    // $raw_args comes from decoded REST/JSON input, so its elements are mixed; each is validated below.
     // @mago-expect analysis:mixed-assignment
     foreach ($raw_args as $arg) {
         if (!is_string($arg)) {

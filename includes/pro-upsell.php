@@ -38,17 +38,18 @@ add_action(
         if (novamira_pro_is_active()) {
             return;
         }
-        // @mago-expect lint:no-global
+        // @mago-expect lint:no-global -- $submenu is WP core's only mutable handle for adding an external-URL submenu item.
         global $submenu;
-        if (!is_array($submenu) || !array_key_exists('novamira-connect', $submenu)) {
+        if (!is_array($submenu) || !is_array($submenu['novamira-connect'] ?? null)) {
             return;
         }
-        // @mago-expect analysis:mixed-array-assignment
-        $submenu['novamira-connect'][] = [
+        $entries = $submenu['novamira-connect'];
+        $entries[] = [
             '<span style="color:#f8ca50;font-weight:600;">' . esc_html__('Get Pro', domain: 'novamira') . '</span>',
             novamira_manage_capability(),
             esc_url(NOVAMIRA_PRO_URL . '?utm_source=plugin&utm_medium=submenu'),
         ];
+        $submenu['novamira-connect'] = $entries;
     },
     priority: 99,
 );

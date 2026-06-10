@@ -67,8 +67,6 @@ function register(): void
  * @param array<string,mixed> $input
  * @return array<string,mixed>|WP_Error
  */
-// @mago-expect lint:cyclomatic-complexity
-// @mago-expect lint:halstead
 function execute(array $input): array|WP_Error
 {
     $title = sanitize_title((string) ($input['title'] ?? ''));
@@ -105,31 +103,11 @@ function execute(array $input): array|WP_Error
         );
     }
 
-    $on_conflict = (string) ($input['on_conflict'] ?? 'fail');
-    if (!in_array($on_conflict, ['fail', 'replace', 'rename'], strict: true)) {
-        $on_conflict = 'fail';
+    $resolved = resolve_conflict($title, (string) ($input['on_conflict'] ?? 'fail'));
+    if ($resolved instanceof WP_Error) {
+        return $resolved;
     }
-
-    $existing = find_user_post_by_slug($title);
-    $action = 'created';
-    $slug = $title;
-
-    if ($existing !== null) {
-        if ($on_conflict === 'fail') {
-            return new WP_Error('slug_exists', __('A skill with this title already exists.', domain: 'novamira'), [
-                'slug' => $slug,
-                'suggested_slug' => find_free_suffix($slug),
-            ]);
-        }
-        if ($on_conflict === 'rename') {
-            $slug = find_free_suffix($slug);
-            $action = 'renamed';
-            $existing = null;
-        }
-        if ($existing !== null) {
-            $action = 'updated';
-        }
-    }
+    [$slug, $action, $existing] = $resolved;
 
     $enable_prompt = filter_var($input['enable_prompt'] ?? true, FILTER_VALIDATE_BOOLEAN);
     $enable_agentic = filter_var($input['enable_agentic'] ?? true, FILTER_VALIDATE_BOOLEAN);
@@ -147,14 +125,18 @@ function execute(array $input): array|WP_Error
         $postarr['ID'] = $existing->ID;
     }
 
+    // wp_slash() preserves array shape at runtime (it only slashes string
+    // leaves) but its stub return type widens to a generic `array`, so we
+    // re-pin the post-data shape before handing it to wp_*_post().
+    /** @var array{ID?: int, post_type: string, post_status: string, post_title: string, post_name: string, post_excerpt: string, post_content: string} $slashed */
+    $slashed = wp_slash($postarr);
+
     $post_id = 0;
     if ($existing !== null) {
-        // @mago-expect analysis:possibly-invalid-argument
-        $post_id = wp_update_post(wp_slash($postarr), wp_error: true);
+        $post_id = wp_update_post($slashed, wp_error: true);
     }
     if ($existing === null) {
-        // @mago-expect analysis:possibly-invalid-argument
-        $post_id = wp_insert_post(wp_slash($postarr), wp_error: true);
+        $post_id = wp_insert_post($slashed, wp_error: true);
     }
 
     if (is_wp_error($post_id)) {
@@ -169,6 +151,40 @@ function execute(array $input): array|WP_Error
         'slug' => $slug,
         'action' => $action,
     ];
+}
+
+/**
+ * Resolves a title against any existing user skill with the same slug.
+ *
+ * Returns a WP_Error when the slug is taken and the caller asked to fail;
+ * otherwise the resolved [slug, action, existing post] tuple. On "rename"
+ * the existing post is dropped so the caller inserts a fresh, suffixed skill.
+ *
+ * @return WP_Error|array{0: string, 1: 'created'|'updated'|'renamed', 2: ?\WP_Post}
+ */
+function resolve_conflict(string $title, string $on_conflict): WP_Error|array
+{
+    if (!in_array($on_conflict, ['fail', 'replace', 'rename'], strict: true)) {
+        $on_conflict = 'fail';
+    }
+
+    $existing = find_user_post_by_slug($title);
+    if ($existing === null) {
+        return [$title, 'created', null];
+    }
+
+    if ($on_conflict === 'fail') {
+        return new WP_Error('slug_exists', __('A skill with this title already exists.', domain: 'novamira'), [
+            'slug' => $title,
+            'suggested_slug' => find_free_suffix($title),
+        ]);
+    }
+
+    if ($on_conflict === 'rename') {
+        return [find_free_suffix($title), 'renamed', null];
+    }
+
+    return [$title, 'updated', $existing];
 }
 
 function find_user_post_by_slug(string $slug): ?\WP_Post

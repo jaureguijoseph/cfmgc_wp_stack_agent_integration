@@ -41,6 +41,9 @@ function register_dynamic_abilities(): void
             'slug' => $slug,
             'description' => $description,
             'content' => (string) ($skill['content'] ?? ''),
+            // Source records are typed `array<string,mixed>`, so these activation
+            // flags arrive as `mixed`; casting them to `bool` is the intended
+            // normalization for any source-provided value (default enabled).
             // @mago-expect analysis:mixed-operand
             'enable_prompt' => (bool) ($skill['enable_prompt'] ?? true),
             // @mago-expect analysis:mixed-operand

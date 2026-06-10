@@ -54,6 +54,8 @@ function register_menu(): void
  * Hub (slug `novamira-abilities`) inside the Novamira menu group. Runs at a
  * priority higher than any caller of `add_submenu_page` for that parent.
  */
+// WordPress exposes the admin menu structure only via the $submenu superglobal;
+// there is no core API to reorder submenu entries, so writing it back is required.
 // @mago-expect lint:no-global
 function reorder_submenu(): void
 {
@@ -121,6 +123,9 @@ function register_post_handlers(): void
     ];
     foreach ($actions as $action) {
         $handler = 'handle_' . substr($action, strlen('novamira_skill_'));
+        // The callback is a runtime-built function-name string; the WP stubs type
+        // add_action()'s callback as callable(...mixed): mixed, which a plain
+        // string can never match precisely.
         // @mago-expect analysis:less-specific-nested-argument-type
         add_action("admin_post_{$action}", __NAMESPACE__ . '\\' . $handler);
     }
@@ -303,6 +308,8 @@ function handle_toggle_activation(): void
         wp_die(__('Invalid field.', domain: 'novamira'));
     }
     $meta_key = $field === 'enable_prompt' ? Cpt\META_ENABLE_PROMPT : Cpt\META_ENABLE_AGENTIC;
+    // get_post_meta() with single:true is typed `mixed` by the WP stubs; the
+    // stored value is a serialized bool flag, so casting it to bool is correct.
     // @mago-expect analysis:mixed-operand
     $current = (bool) get_post_meta($post_id, $meta_key, single: true);
     update_post_meta($post_id, $meta_key, !$current);
@@ -422,6 +429,9 @@ function process_one_upload(array $file, string $on_conflict): string|\WP_Error
  *
  * @return list<array{name: string, tmp_name: string, error: int, size: int}>
  */
+// $_FILES is an untyped superglobal: every branch guards both the single-file and
+// array shapes, which is irreducibly branchy, and the loop variable below is mixed
+// because $raw['name'] is mixed (each element is narrowed at its use site instead).
 // @mago-expect lint:cyclomatic-complexity
 // @mago-expect analysis:mixed-assignment
 function normalize_uploaded_files(mixed $raw): array
@@ -485,6 +495,8 @@ function handle_download(): void
     require_capability_and_nonce('novamira_skill_download_' . $post_id);
     $post = load_skill_post($post_id);
 
+    // get_post_meta() with single:true is typed `mixed` by the WP stubs; the
+    // stored values are serialized bool flags, so casting them to bool is correct.
     // @mago-expect analysis:mixed-operand
     $enable_prompt = (bool) get_post_meta($post_id, Cpt\META_ENABLE_PROMPT, single: true);
     // @mago-expect analysis:mixed-operand
@@ -546,6 +558,8 @@ function handle_download_all(): void
     }
 
     foreach ($posts as $post) {
+        // get_post_meta() with single:true is typed `mixed` by the WP stubs; the
+        // stored values are serialized bool flags, so casting them to bool is correct.
         // @mago-expect analysis:mixed-operand
         $enable_prompt = (bool) get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true);
         // @mago-expect analysis:mixed-operand
@@ -588,6 +602,8 @@ function require_capability_and_nonce(string $nonce_action): void
 
 function load_skill_post(int $post_id): \WP_Post
 {
+    // get_post() is typed `WP_Post|array|null` by the WP stubs; the bare `array`
+    // member resolves to mixed, which the instanceof guard below narrows away.
     // @mago-expect analysis:mixed-assignment
     $maybe_post = get_post($post_id);
     if (!$maybe_post instanceof \WP_Post || $maybe_post->post_type !== Cpt\POST_TYPE) {

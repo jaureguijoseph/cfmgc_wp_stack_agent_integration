@@ -97,6 +97,7 @@ function novamira_handle_admin_access_exchange(WP_REST_Request $request)
         return new WP_Error('missing_admin_access_nonce', 'Missing admin access nonce.', ['status' => 401]);
     }
 
+    // get_transient() returns mixed (any serialized value); guarded by is_array() below.
     // @mago-expect analysis:mixed-assignment
     $payload = get_transient(novamira_admin_access_transient_key($token));
     delete_transient(novamira_admin_access_transient_key($token));
@@ -168,6 +169,7 @@ function novamira_handle_admin_access_login(WP_REST_Request $request)
         return new WP_Error('missing_admin_access_nonce', 'Missing admin access nonce.', ['status' => 401]);
     }
 
+    // get_transient() returns mixed (any serialized value); guarded by is_array() below.
     // @mago-expect analysis:mixed-assignment
     $payload = get_transient(novamira_admin_access_login_nonce_transient_key($nonce));
     delete_transient(novamira_admin_access_login_nonce_transient_key($nonce));

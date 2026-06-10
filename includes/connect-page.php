@@ -385,6 +385,9 @@ function novamira_render_password_row(array $pw, string $dt_format): void
  * Just the generate button (with a collapsible name input) and a success notice after generation.
  * The list of existing passwords lives in the separate manage section at the bottom of the page.
  */
+// Complexity is inherent: this is a single HTML template whose branches (password availability,
+// newly generated vs. pasted vs. no password, has-existing toggles, error notices) each gate a
+// distinct piece of inline markup. Splitting them into helpers would fragment one cohesive view.
 // @mago-expect lint:cyclomatic-complexity
 function novamira_render_password_step(
     ?string $new_password,
@@ -1523,6 +1526,11 @@ function novamira_render_enable_prompt(?WP_Error $dependency_error): void
 /**
  * Render the connect / setup dashboard page.
  */
+// Complexity is inherent: this is the top-level admin page template that orchestrates request
+// handling (toggle/create/use-existing) and then conditionally emits each section (dependency
+// notice, save notice, password step, config block, disabled-state manage list) inline. The
+// branches map one-to-one onto template regions, so extracting them would not reduce real
+// complexity, only scatter the page layout across helpers.
 // @mago-expect lint:cyclomatic-complexity
 function novamira_render_connect_page(): void
 {
