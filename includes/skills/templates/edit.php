@@ -44,12 +44,8 @@ if (!$is_new) {
     $title = $post->post_name !== '' ? $post->post_name : $post->post_title;
     $description = $post->post_excerpt;
     $content = $post->post_content;
-    // get_post_meta() returns mixed; the (bool) cast is the intended coercion of the
-    // stored meta value (empty string => false, '1' => true).
-    // @mago-expect analysis:mixed-operand
-    $enable_prompt = (bool) get_post_meta($post_id, Cpt\META_ENABLE_PROMPT, single: true);
-    // @mago-expect analysis:mixed-operand
-    $enable_agentic = (bool) get_post_meta($post_id, Cpt\META_ENABLE_AGENTIC, single: true);
+    $enable_prompt = boolval(get_post_meta($post_id, Cpt\META_ENABLE_PROMPT, single: true));
+    $enable_agentic = boolval(get_post_meta($post_id, Cpt\META_ENABLE_AGENTIC, single: true));
     $enabled = $post->post_status === 'publish';
 }
 

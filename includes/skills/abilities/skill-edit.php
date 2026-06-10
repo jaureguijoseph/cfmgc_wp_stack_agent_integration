@@ -149,9 +149,7 @@ function execute(array $input): array|WP_Error
 
     if (array_key_exists('enable_prompt', $input)) {
         $new = filter_var($input['enable_prompt'], FILTER_VALIDATE_BOOLEAN);
-        // get_post_meta() returns `mixed`; the cast normalizes the stored flag back to bool.
-        // @mago-expect analysis:mixed-operand
-        $current = (bool) get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true);
+        $current = boolval(get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true));
         if ($new !== $current) {
             update_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, $new);
             $changed[] = 'enable_prompt';
@@ -160,9 +158,7 @@ function execute(array $input): array|WP_Error
 
     if (array_key_exists('enable_agentic', $input)) {
         $new = filter_var($input['enable_agentic'], FILTER_VALIDATE_BOOLEAN);
-        // get_post_meta() returns `mixed`; the cast normalizes the stored flag back to bool.
-        // @mago-expect analysis:mixed-operand
-        $current = (bool) get_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, single: true);
+        $current = boolval(get_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, single: true));
         if ($new !== $current) {
             update_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, $new);
             $changed[] = 'enable_agentic';

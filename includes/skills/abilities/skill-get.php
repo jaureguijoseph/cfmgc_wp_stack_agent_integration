@@ -109,13 +109,8 @@ function register(): void
 
             $skill = Sources\find($agent_slug);
             if ($skill !== null) {
-                // Source records are typed `array<string,mixed>`, so these
-                // activation flags arrive as `mixed`; casting them to `bool` is
-                // the intended normalization for any source-provided value.
-                // @mago-expect analysis:mixed-operand
-                $enable_prompt = (bool) ($skill['enable_prompt'] ?? false);
-                // @mago-expect analysis:mixed-operand
-                $enable_agentic = (bool) ($skill['enable_agentic'] ?? true);
+                $enable_prompt = boolval($skill['enable_prompt'] ?? false);
+                $enable_agentic = boolval($skill['enable_agentic'] ?? true);
                 return [
                     'found' => true,
                     'slug' => (string) $skill['slug'],

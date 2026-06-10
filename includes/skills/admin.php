@@ -308,10 +308,7 @@ function handle_toggle_activation(): void
         wp_die(__('Invalid field.', domain: 'novamira'));
     }
     $meta_key = $field === 'enable_prompt' ? Cpt\META_ENABLE_PROMPT : Cpt\META_ENABLE_AGENTIC;
-    // get_post_meta() with single:true is typed `mixed` by the WP stubs; the
-    // stored value is a serialized bool flag, so casting it to bool is correct.
-    // @mago-expect analysis:mixed-operand
-    $current = (bool) get_post_meta($post_id, $meta_key, single: true);
+    $current = boolval(get_post_meta($post_id, $meta_key, single: true));
     update_post_meta($post_id, $meta_key, !$current);
     Notices\set_pending_reload_notice();
     wp_safe_redirect(add_query_arg(['page' => PAGE_SLUG, 'updated' => '1'], admin_url('admin.php')));
@@ -495,12 +492,8 @@ function handle_download(): void
     require_capability_and_nonce('novamira_skill_download_' . $post_id);
     $post = load_skill_post($post_id);
 
-    // get_post_meta() with single:true is typed `mixed` by the WP stubs; the
-    // stored values are serialized bool flags, so casting them to bool is correct.
-    // @mago-expect analysis:mixed-operand
-    $enable_prompt = (bool) get_post_meta($post_id, Cpt\META_ENABLE_PROMPT, single: true);
-    // @mago-expect analysis:mixed-operand
-    $enable_agentic = (bool) get_post_meta($post_id, Cpt\META_ENABLE_AGENTIC, single: true);
+    $enable_prompt = boolval(get_post_meta($post_id, Cpt\META_ENABLE_PROMPT, single: true));
+    $enable_agentic = boolval(get_post_meta($post_id, Cpt\META_ENABLE_AGENTIC, single: true));
 
     $slug = $post->post_name !== '' ? $post->post_name : 'skill';
     $body = Parser\render_skill_md([
@@ -558,12 +551,8 @@ function handle_download_all(): void
     }
 
     foreach ($posts as $post) {
-        // get_post_meta() with single:true is typed `mixed` by the WP stubs; the
-        // stored values are serialized bool flags, so casting them to bool is correct.
-        // @mago-expect analysis:mixed-operand
-        $enable_prompt = (bool) get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true);
-        // @mago-expect analysis:mixed-operand
-        $enable_agentic = (bool) get_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, single: true);
+        $enable_prompt = boolval(get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true));
+        $enable_agentic = boolval(get_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, single: true));
         $slug = $post->post_name !== '' ? $post->post_name : 'skill-' . $post->ID;
         $md = Parser\render_skill_md([
             'slug' => $slug,
