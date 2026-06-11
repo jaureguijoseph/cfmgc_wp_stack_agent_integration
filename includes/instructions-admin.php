@@ -87,7 +87,7 @@ function instructions_update_content(string $content): void
     update_option(instructions_legacy_content_option_name(), $content);
 }
 
-function legacy_pro_owns_context(): bool
+function legacy_pro_context_loaded(): bool
 {
     return (
         function_exists('\\Novamira\\Pro\\instructions_get_content')
@@ -153,7 +153,7 @@ function instructions_post_string(string $key): string
 
 function register_context_menu(): void
 {
-    if (!defined('NOVAMIRA_VERSION') || legacy_pro_owns_context()) {
+    if (!defined('NOVAMIRA_VERSION')) {
         return;
     }
 
@@ -167,9 +167,18 @@ function register_context_menu(): void
     );
 }
 
+function remove_legacy_context_menu(): void
+{
+    if (!legacy_pro_context_loaded()) {
+        return;
+    }
+
+    remove_submenu_page(menu_slug: 'novamira-connect', submenu_slug: 'novamira-pro-context');
+}
+
 function redirect_legacy_context_page(): void
 {
-    if (legacy_pro_owns_context() || !\novamira_current_user_can_manage()) {
+    if (!\novamira_current_user_can_manage()) {
         return;
     }
 
@@ -188,23 +197,22 @@ function context_handle_post(): ?array
         return null;
     }
 
+    $action = instructions_post_string('novamira_context_action');
+    if (!in_array($action, ['toggle_context', 'save_context'], strict: true)) {
+        return null;
+    }
+
     check_admin_referer('novamira_context');
 
     if (!\novamira_current_user_can_manage()) {
         wp_die(esc_html__('You are not allowed to manage context.', domain: 'novamira'));
     }
 
-    $action = instructions_post_string('novamira_context_action');
-
     if ($action === 'toggle_context') {
         return instructions_handle_toggle();
     }
 
-    if ($action === 'save_context') {
-        return instructions_handle_save();
-    }
-
-    return null;
+    return instructions_handle_save();
 }
 
 /** @return array{type:string,message:string} */
@@ -299,6 +307,7 @@ function render_context_page(): void
         <?php render_context_styles(); ?>
         <?php render_context_system_section(); ?>
         <?php render_user_context_section(); ?>
+        <?php do_action('novamira_context_page_sections'); ?>
     </div>
     <?php
 }
@@ -422,7 +431,7 @@ function render_user_context_section(): void
                 ); ?></li>
             </ul>
             <p style="margin-bottom:0;"><?php esc_html_e(
-                'Do not put passwords, API keys, private customer data, or one-off task notes here. Use memories for changing project facts and references.',
+                'Do not put passwords, API keys, private customer data, or one-off task notes here. Keep this page for stable site-wide guidance.',
                 domain: 'novamira',
             ); ?></p>
         </div>
@@ -475,5 +484,6 @@ function render_context_notice(?array $notice): void
 function boot_context_admin(): void
 {
     add_action('admin_menu', callback: __NAMESPACE__ . '\\register_context_menu', priority: 12);
+    add_action('admin_menu', callback: __NAMESPACE__ . '\\remove_legacy_context_menu', priority: 100);
     add_action('admin_init', callback: __NAMESPACE__ . '\\redirect_legacy_context_page');
 }
