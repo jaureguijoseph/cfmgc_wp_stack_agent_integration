@@ -136,7 +136,7 @@ function novamira_execute_php($input)
     $error_class = null;
 
     try {
-        // @mago-ignore lint:no-eval
+        // @mago-expect lint:no-eval
         /** @var mixed $return_value */
         $return_value = eval($code);
     } catch (\Throwable $e) {

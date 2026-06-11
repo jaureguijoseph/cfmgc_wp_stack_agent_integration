@@ -69,6 +69,9 @@ function register(): void
  * @param array<string,mixed> $input
  * @return array<string,mixed>|WP_Error
  */
+// Linear dispatcher: one guarded validate-and-update block per editable field, each with its own
+// early-return WP_Error and mutating shared $changed/$current_slug state. Extracting blocks would
+// only shuffle that shared state across helpers without reducing real complexity.
 // @mago-expect lint:cyclomatic-complexity
 // @mago-expect lint:halstead
 function execute(array $input): array|WP_Error
@@ -145,10 +148,8 @@ function execute(array $input): array|WP_Error
     }
 
     if (array_key_exists('enable_prompt', $input)) {
-        // @mago-expect analysis:mixed-operand
-        $new = (bool) $input['enable_prompt'];
-        // @mago-expect analysis:mixed-operand
-        $current = (bool) get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true);
+        $new = filter_var($input['enable_prompt'], FILTER_VALIDATE_BOOLEAN);
+        $current = boolval(get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true));
         if ($new !== $current) {
             update_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, $new);
             $changed[] = 'enable_prompt';
@@ -156,10 +157,8 @@ function execute(array $input): array|WP_Error
     }
 
     if (array_key_exists('enable_agentic', $input)) {
-        // @mago-expect analysis:mixed-operand
-        $new = (bool) $input['enable_agentic'];
-        // @mago-expect analysis:mixed-operand
-        $current = (bool) get_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, single: true);
+        $new = filter_var($input['enable_agentic'], FILTER_VALIDATE_BOOLEAN);
+        $current = boolval(get_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, single: true));
         if ($new !== $current) {
             update_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, $new);
             $changed[] = 'enable_agentic';
@@ -167,8 +166,7 @@ function execute(array $input): array|WP_Error
     }
 
     if (array_key_exists('enabled', $input)) {
-        // @mago-expect analysis:mixed-operand
-        $new_status = (bool) $input['enabled'] ? 'publish' : 'draft';
+        $new_status = filter_var($input['enabled'], FILTER_VALIDATE_BOOLEAN) ? 'publish' : 'draft';
         if ($new_status !== $post->post_status) {
             wp_update_post(['ID' => $post->ID, 'post_status' => $new_status]);
             $changed[] = 'enabled';

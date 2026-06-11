@@ -1,3 +1,7 @@
+unreleased
+* New: Memory and custom instructions are now included in Novamira.
+* Minor Fixes
+
 v1.6.0 - 2026/06/01
 * New: A new Abilities Hub screen lists every ability available to AI agents, grouped by the plugin that provides it, so you can enable or disable each one individually.
 * Tweak: Gutenberg pages built by AI agents now consistently use native and third-party blocks, so the result stays editable in the block editor; previously they could sometimes place content in a single raw HTML block.

@@ -52,6 +52,11 @@ if (!defined('ABSPATH')) {
  * After enough downstream plugins migrate to the source-filter
  * (`novamira_skill_lookup_sources`), the fallback path stops firing
  * naturally. Keeping the wrapper costs nothing.
+ *
+ * High Halstead effort is inherent: this is one declarative
+ * `wp_register_ability()` call carrying the full input/output JSON schema
+ * plus the execute closure. Splitting it would scatter a single
+ * registration with no readability gain.
  */
 // @mago-expect lint:halstead
 function register(): void
@@ -104,10 +109,8 @@ function register(): void
 
             $skill = Sources\find($agent_slug);
             if ($skill !== null) {
-                // @mago-expect analysis:mixed-operand
-                $enable_prompt = (bool) ($skill['enable_prompt'] ?? false);
-                // @mago-expect analysis:mixed-operand
-                $enable_agentic = (bool) ($skill['enable_agentic'] ?? true);
+                $enable_prompt = boolval($skill['enable_prompt'] ?? false);
+                $enable_agentic = boolval($skill['enable_agentic'] ?? true);
                 return [
                     'found' => true,
                     'slug' => (string) $skill['slug'],
@@ -130,7 +133,7 @@ function register(): void
             // Generic — works for any plugin that previously registered
             // `novamira/skill-get`.
             if ($previous instanceof \WP_Ability) {
-                // @mago-expect analysis:mixed-assignment
+                /** @var mixed $forwarded */
                 $forwarded = $previous->execute(['slug' => $agent_slug]);
                 if (!is_wp_error($forwarded)) {
                     return is_array($forwarded) ? $forwarded : ['found' => false];

@@ -54,6 +54,8 @@ function register_menu(): void
  * Hub (slug `novamira-abilities`) inside the Novamira menu group. Runs at a
  * priority higher than any caller of `add_submenu_page` for that parent.
  */
+// WordPress exposes the admin menu structure only via the $submenu superglobal;
+// there is no core API to reorder submenu entries, so writing it back is required.
 // @mago-expect lint:no-global
 function reorder_submenu(): void
 {
@@ -121,6 +123,9 @@ function register_post_handlers(): void
     ];
     foreach ($actions as $action) {
         $handler = 'handle_' . substr($action, strlen('novamira_skill_'));
+        // The callback is a runtime-built function-name string; the WP stubs type
+        // add_action()'s callback as callable(...mixed): mixed, which a plain
+        // string can never match precisely.
         // @mago-expect analysis:less-specific-nested-argument-type
         add_action("admin_post_{$action}", __NAMESPACE__ . '\\' . $handler);
     }
@@ -303,8 +308,7 @@ function handle_toggle_activation(): void
         wp_die(__('Invalid field.', domain: 'novamira'));
     }
     $meta_key = $field === 'enable_prompt' ? Cpt\META_ENABLE_PROMPT : Cpt\META_ENABLE_AGENTIC;
-    // @mago-expect analysis:mixed-operand
-    $current = (bool) get_post_meta($post_id, $meta_key, single: true);
+    $current = boolval(get_post_meta($post_id, $meta_key, single: true));
     update_post_meta($post_id, $meta_key, !$current);
     Notices\set_pending_reload_notice();
     wp_safe_redirect(add_query_arg(['page' => PAGE_SLUG, 'updated' => '1'], admin_url('admin.php')));
@@ -423,7 +427,6 @@ function process_one_upload(array $file, string $on_conflict): string|\WP_Error
  * @return list<array{name: string, tmp_name: string, error: int, size: int}>
  */
 // @mago-expect lint:cyclomatic-complexity
-// @mago-expect analysis:mixed-assignment
 function normalize_uploaded_files(mixed $raw): array
 {
     if (!is_array($raw) || !array_key_exists('name', $raw)) {
@@ -435,6 +438,7 @@ function normalize_uploaded_files(mixed $raw): array
     $sizes = is_array($raw['size'] ?? null) ? $raw['size'] : [$raw['size'] ?? 0];
 
     $out = [];
+    /** @var mixed $name */
     foreach ($names as $i => $name) {
         $err = (int) ($errors[$i] ?? UPLOAD_ERR_NO_FILE);
         if ($err === UPLOAD_ERR_NO_FILE) {
@@ -485,10 +489,8 @@ function handle_download(): void
     require_capability_and_nonce('novamira_skill_download_' . $post_id);
     $post = load_skill_post($post_id);
 
-    // @mago-expect analysis:mixed-operand
-    $enable_prompt = (bool) get_post_meta($post_id, Cpt\META_ENABLE_PROMPT, single: true);
-    // @mago-expect analysis:mixed-operand
-    $enable_agentic = (bool) get_post_meta($post_id, Cpt\META_ENABLE_AGENTIC, single: true);
+    $enable_prompt = boolval(get_post_meta($post_id, Cpt\META_ENABLE_PROMPT, single: true));
+    $enable_agentic = boolval(get_post_meta($post_id, Cpt\META_ENABLE_AGENTIC, single: true));
 
     $slug = $post->post_name !== '' ? $post->post_name : 'skill';
     $body = Parser\render_skill_md([
@@ -546,10 +548,8 @@ function handle_download_all(): void
     }
 
     foreach ($posts as $post) {
-        // @mago-expect analysis:mixed-operand
-        $enable_prompt = (bool) get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true);
-        // @mago-expect analysis:mixed-operand
-        $enable_agentic = (bool) get_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, single: true);
+        $enable_prompt = boolval(get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true));
+        $enable_agentic = boolval(get_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, single: true));
         $slug = $post->post_name !== '' ? $post->post_name : 'skill-' . $post->ID;
         $md = Parser\render_skill_md([
             'slug' => $slug,
@@ -588,7 +588,7 @@ function require_capability_and_nonce(string $nonce_action): void
 
 function load_skill_post(int $post_id): \WP_Post
 {
-    // @mago-expect analysis:mixed-assignment
+    /** @var mixed $maybe_post */
     $maybe_post = get_post($post_id);
     if (!$maybe_post instanceof \WP_Post || $maybe_post->post_type !== Cpt\POST_TYPE) {
         wp_die(__('Skill not found.', domain: 'novamira'));

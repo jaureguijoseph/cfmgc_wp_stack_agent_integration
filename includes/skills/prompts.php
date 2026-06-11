@@ -41,10 +41,8 @@ function register_dynamic_abilities(): void
             'slug' => $slug,
             'description' => $description,
             'content' => (string) ($skill['content'] ?? ''),
-            // @mago-expect analysis:mixed-operand
-            'enable_prompt' => (bool) ($skill['enable_prompt'] ?? true),
-            // @mago-expect analysis:mixed-operand
-            'enable_agentic' => (bool) ($skill['enable_agentic'] ?? true),
+            'enable_prompt' => boolval($skill['enable_prompt'] ?? true),
+            'enable_agentic' => boolval($skill['enable_agentic'] ?? true),
         ]);
 
         wp_register_ability("novamira/skill-prompt-{$slug}", [

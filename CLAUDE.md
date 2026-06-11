@@ -17,3 +17,5 @@ make mago-analyze    # static analysis (PHP 8.0, includes WP stubs)
 Use the make targets instead of running Mago directly. Ensure no issues or warnings of any kind when you commit. Also fix any previous unrelated issues you find.
 
 NEVER modify release-info.json by hand unless explicitly instructed to do so, that is modified programmatically
+
+Use Bun for JavaScript dependency and script commands in this repository. Do not use npm; for example, use `bun install` and `bun run build`.

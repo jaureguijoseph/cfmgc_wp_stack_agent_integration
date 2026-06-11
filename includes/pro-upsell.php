@@ -38,17 +38,18 @@ add_action(
         if (novamira_pro_is_active()) {
             return;
         }
-        // @mago-expect lint:no-global
+        // @mago-expect lint:no-global -- $submenu is WP core's only mutable handle for adding an external-URL submenu item.
         global $submenu;
-        if (!is_array($submenu) || !array_key_exists('novamira-connect', $submenu)) {
+        if (!is_array($submenu) || !is_array($submenu['novamira-connect'] ?? null)) {
             return;
         }
-        // @mago-expect analysis:mixed-array-assignment
-        $submenu['novamira-connect'][] = [
+        $entries = $submenu['novamira-connect'];
+        $entries[] = [
             '<span style="color:#f8ca50;font-weight:600;">' . esc_html__('Get Pro', domain: 'novamira') . '</span>',
             novamira_manage_capability(),
             esc_url(NOVAMIRA_PRO_URL . '?utm_source=plugin&utm_medium=submenu'),
         ];
+        $submenu['novamira-connect'] = $entries;
     },
     priority: 99,
 );
@@ -159,7 +160,7 @@ function novamira_render_pro_welcome_notice(): void
         <p style="font-size:14px;margin:10px 0;">
             <strong><?php esc_html_e('Novamira Pro is here.', domain: 'novamira'); ?></strong>
             <?php esc_html_e(
-                'Specializations that combine abilities and skills for page builders (Elementor, Bricks) and content plugins (ACF, JetEngine, Meta Box, Pods, ACPT, ASE), with more on the way, plus memory between sessions.',
+                'Specializations that combine abilities and skills for page builders (Elementor, Bricks) and content plugins (ACF, JetEngine, Meta Box, Pods, ACPT, ASE), with more on the way.',
                 domain: 'novamira',
             ); ?>
             &nbsp;
@@ -205,7 +206,7 @@ function novamira_render_pro_upsell_card(): void
         </h2>
         <p style="margin:0 0 12px;color:#50575e;">
             <?php esc_html_e(
-                'Specializations that combine abilities and skills for page builders (Elementor, Bricks) and content plugins (ACF, JetEngine, Meta Box, Pods, ACPT, ASE), with more on the way, plus memory between sessions.',
+                'Specializations that combine abilities and skills for page builders (Elementor, Bricks) and content plugins (ACF, JetEngine, Meta Box, Pods, ACPT, ASE), with more on the way.',
                 domain: 'novamira',
             ); ?>
         </p>

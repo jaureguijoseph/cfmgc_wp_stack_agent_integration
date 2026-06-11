@@ -17,7 +17,7 @@ if (!Admin\current_user_can_manage()) {
 }
 
 $skill_param = $_GET['skill'] ?? 'new';
-$id_or_new = is_scalar($skill_param) ? (string) $skill_param : 'new'; // @mago-expect analysis:redundant-cast
+$id_or_new = is_string($skill_param) ? $skill_param : 'new';
 $is_new = $id_or_new === 'new';
 
 $title = '';
@@ -29,7 +29,7 @@ $enabled = true;
 $post_id = 0;
 
 if (!$is_new) {
-    // @mago-expect analysis:mixed-assignment
+    /** @var mixed $maybe_post */
     $maybe_post = get_post((int) $id_or_new);
     if (!$maybe_post instanceof \WP_Post || $maybe_post->post_type !== Cpt\POST_TYPE) {
         wp_die(__('Skill not found.', domain: 'novamira'));
@@ -41,10 +41,8 @@ if (!$is_new) {
     $title = $post->post_name !== '' ? $post->post_name : $post->post_title;
     $description = $post->post_excerpt;
     $content = $post->post_content;
-    // @mago-expect analysis:mixed-operand
-    $enable_prompt = (bool) get_post_meta($post_id, Cpt\META_ENABLE_PROMPT, single: true);
-    // @mago-expect analysis:mixed-operand
-    $enable_agentic = (bool) get_post_meta($post_id, Cpt\META_ENABLE_AGENTIC, single: true);
+    $enable_prompt = boolval(get_post_meta($post_id, Cpt\META_ENABLE_PROMPT, single: true));
+    $enable_agentic = boolval(get_post_meta($post_id, Cpt\META_ENABLE_AGENTIC, single: true));
     $enabled = $post->post_status === 'publish';
 }
 

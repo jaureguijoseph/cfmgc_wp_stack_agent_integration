@@ -33,22 +33,87 @@ function unescape_content(string $raw): string
 }
 
 /**
+ * Strip a single layer of matching surrounding quotes (single or double) from a
+ * trimmed frontmatter value. Leaves the value untouched if it isn't quoted.
+ */
+function unquote_value(string $value): string
+{
+    if (str_starts_with($value, '"') && str_ends_with($value, '"')) {
+        return substr($value, offset: 1, length: -1);
+    }
+    if (str_starts_with($value, "'") && str_ends_with($value, "'")) {
+        return substr($value, offset: 1, length: -1);
+    }
+    return $value;
+}
+
+/**
+ * Parse the raw frontmatter block (the text between the `---` fences) into the
+ * recognized fields. Blank lines, comment lines (`#`), lines without a colon,
+ * and unknown keys are ignored (lenient). Unspecified fields keep their default.
+ *
+ * @return array{name: string, description: string, enable_prompt: bool, enable_agentic: bool}
+ */
+function parse_frontmatter(string $frontmatter_raw): array
+{
+    $name = '';
+    $description = '';
+    $enable_prompt = true;
+    $enable_agentic = true;
+
+    foreach (explode(separator: "\n", string: $frontmatter_raw) as $line) {
+        if (trim($line) === '' || str_starts_with(trim($line), '#')) {
+            continue;
+        }
+        $colon = strpos($line, needle: ':');
+        if ($colon === false) {
+            continue;
+        }
+        $key = strtolower(trim(substr($line, offset: 0, length: $colon)));
+        $value = unquote_value(trim(substr($line, offset: $colon + 1)));
+        switch ($key) {
+            case 'name':
+                $name = $value;
+                break;
+            case 'description':
+                $description = $value;
+                break;
+            case 'enable_prompt':
+                $enable_prompt = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+                break;
+            case 'enable_agentic':
+                $enable_agentic = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+                break;
+
+            // Unknown keys silently ignored (lenient).
+        }
+    }
+
+    return [
+        'name' => $name,
+        'description' => $description,
+        'enable_prompt' => $enable_prompt,
+        'enable_agentic' => $enable_agentic,
+    ];
+}
+
+/**
  * Parse a SKILL.md string. Lenient: a malformed frontmatter block is reported
  * via `parse_error`, missing fields fall back to sensible defaults, and unknown
  * keys are silently ignored.
  *
  * @return array{name: string, description: string, enable_prompt: bool, enable_agentic: bool, body: string, parse_error: ?string}
  */
-// @mago-expect lint:cyclomatic-complexity
-// @mago-expect lint:halstead
 function parse(string $raw): array
 {
-    $name = '';
-    $description = '';
-    $enable_prompt = true;
-    $enable_agentic = true;
     $body = $raw;
     $parse_error = null;
+    $fields = [
+        'name' => '',
+        'description' => '',
+        'enable_prompt' => true,
+        'enable_agentic' => true,
+    ];
 
     $normalized = preg_replace(pattern: '/\r\n?/', replacement: "\n", subject: $raw);
     if (!is_string($normalized)) {
@@ -64,39 +129,7 @@ function parse(string $raw): array
         if ($closing !== false) {
             $frontmatter_raw = substr($normalized, offset: 4, length: $closing - 4);
             $body = ltrim(substr($normalized, offset: $closing + 5), characters: "\n");
-            foreach (explode(separator: "\n", string: $frontmatter_raw) as $line) {
-                if (trim($line) === '' || str_starts_with(trim($line), '#')) {
-                    continue;
-                }
-                $colon = strpos($line, needle: ':');
-                if ($colon === false) {
-                    continue;
-                }
-                $key = strtolower(trim(substr($line, offset: 0, length: $colon)));
-                $value = trim(substr($line, offset: $colon + 1));
-                if (str_starts_with($value, '"') && str_ends_with($value, '"')) {
-                    $value = substr($value, offset: 1, length: -1);
-                }
-                if (str_starts_with($value, "'") && str_ends_with($value, "'")) {
-                    $value = substr($value, offset: 1, length: -1);
-                }
-                switch ($key) {
-                    case 'name':
-                        $name = $value;
-                        break;
-                    case 'description':
-                        $description = $value;
-                        break;
-                    case 'enable_prompt':
-                        $enable_prompt = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
-                        break;
-                    case 'enable_agentic':
-                        $enable_agentic = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
-                        break;
-
-                    // Unknown keys silently ignored (lenient).
-                }
-            }
+            $fields = parse_frontmatter($frontmatter_raw);
         }
         if ($closing === false) {
             $parse_error = __('Frontmatter started with --- but had no closing ---', domain: 'novamira');
@@ -104,10 +137,10 @@ function parse(string $raw): array
     }
 
     return [
-        'name' => $name,
-        'description' => $description,
-        'enable_prompt' => $enable_prompt,
-        'enable_agentic' => $enable_agentic,
+        'name' => $fields['name'],
+        'description' => $fields['description'],
+        'enable_prompt' => $fields['enable_prompt'],
+        'enable_agentic' => $fields['enable_agentic'],
         'body' => $body,
         'parse_error' => $parse_error,
     ];

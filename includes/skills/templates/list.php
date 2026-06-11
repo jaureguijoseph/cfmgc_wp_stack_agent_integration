@@ -36,10 +36,10 @@ $user_total_pages = (int) $user_query->max_num_pages;
 $just_imported_key = 'novamira_skill_just_imported_' . get_current_user_id();
 /** @var list<int> $just_imported */
 $just_imported = [];
-// @mago-expect analysis:mixed-assignment
+/** @var mixed $just_imported_raw */
 $just_imported_raw = get_transient($just_imported_key);
 if (is_array($just_imported_raw)) {
-    // @mago-expect analysis:mixed-assignment
+    /** @var mixed $post_id */
     foreach ($just_imported_raw as $post_id) {
         if (!is_scalar($post_id)) {
             continue;
@@ -175,10 +175,8 @@ $new_url = add_query_arg(['page' => Admin\PAGE_SLUG, 'skill' => 'new'], admin_ur
             <?php foreach ($user_posts as $post):
                 $slug = $post->post_name;
                 $malformed_title = $slug === '';
-                // @mago-expect analysis:mixed-operand
-                $prompt_on = (bool) get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true);
-                // @mago-expect analysis:mixed-operand
-                $agentic_on = (bool) get_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, single: true);
+                $prompt_on = boolval(get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true));
+                $agentic_on = boolval(get_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, single: true));
                 $enabled = $post->post_status === 'publish';
                 $description = trim($post->post_excerpt);
                 $missing_description = $description === '';
@@ -312,7 +310,7 @@ $new_url = add_query_arg(['page' => Admin\PAGE_SLUG, 'skill' => 'new'], admin_ur
             ); ?>">
                 <?php
 
-                // @mago-expect analysis:mixed-assignment
+                /** @var mixed $links */
                 $links = paginate_links([
                     'base' => add_query_arg(['paged' => '%#%'], admin_url('admin.php?page=' . Admin\PAGE_SLUG)),
                     'format' => '',
@@ -431,10 +429,8 @@ $new_url = add_query_arg(['page' => Admin\PAGE_SLUG, 'skill' => 'new'], admin_ur
                 $slug = (string) ($skill['slug'] ?? '');
                 $description = trim((string) ($skill['description'] ?? ''));
                 $missing_description = $description === '';
-                // @mago-expect analysis:mixed-operand
-                $prompt_on = (bool) ($skill['enable_prompt'] ?? false);
-                // @mago-expect analysis:mixed-operand
-                $agentic_on = (bool) ($skill['enable_agentic'] ?? false);
+                $prompt_on = boolval($skill['enable_prompt'] ?? false);
+                $agentic_on = boolval($skill['enable_agentic'] ?? false);
                 ?>
             <div class="novamira-skills-d-row is-external is-on">
                 <div class="novamira-skills-d-source-icon" aria-hidden="true">↗</div>

@@ -668,7 +668,7 @@ function novamira_get_ability_rules(): array
     }
 
     $rules = [];
-    // @mago-expect analysis:mixed-assignment
+    /** @var mixed $rule */
     foreach ($stored as $ability_name => $rule) {
         if (!is_string($ability_name) || !is_array($rule) || !novamira_is_valid_ability_name($ability_name)) {
             continue;

@@ -166,7 +166,7 @@ function novamira_run_wp_cli(array $input)
 {
     $raw_args = is_array($input['args'] ?? null) ? $input['args'] : [];
     $args = [];
-    // @mago-expect analysis:mixed-assignment
+    /** @var mixed $arg */
     foreach ($raw_args as $arg) {
         if (!is_string($arg)) {
             return new WP_Error('invalid_wp_cli_arg', __('WP-CLI arguments must be strings.', domain: 'novamira'));

@@ -79,10 +79,8 @@ function load_user_cpt(): array
             'name' => $post->post_title,
             'description' => $post->post_excerpt,
             'content' => $post->post_content,
-            // @mago-expect analysis:mixed-operand
-            'enable_prompt' => (bool) get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true),
-            // @mago-expect analysis:mixed-operand
-            'enable_agentic' => (bool) get_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, single: true),
+            'enable_prompt' => boolval(get_post_meta($post->ID, Cpt\META_ENABLE_PROMPT, single: true)),
+            'enable_agentic' => boolval(get_post_meta($post->ID, Cpt\META_ENABLE_AGENTIC, single: true)),
         ];
     }
     return $result;
