@@ -1,5 +1,5 @@
 unreleased
-* New: Memory and custom instructions are now included in Novamira.
+* New: Custom instructions are now included in Novamira on the Context page.
 * Minor Fixes
 
 v1.6.0 - 2026/06/01
